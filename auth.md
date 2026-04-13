@@ -1,0 +1,180 @@
+## Recommended Authentication Architecture (Updated Plan)
+
+Karena project ini akan diarahkan menjadi **Next.js fullstack**, maka autentikasi direkomendasikan berjalan langsung di layer Next.js tanpa backend terpisah untuk auth.
+
+### 6.1 Auth Stack Recommendation
+
+- **Framework:** Next.js (App Router, fullstack)
+- **Auth Library:** Auth.js / NextAuth
+- **Database:** MongoDB
+- **Password Hashing:** bcryptjs
+- **Session Strategy:** JWT session
+- **OAuth Provider:** Google OAuth (initial), dapat diperluas ke provider lain
+
+### 6.2 Authentication Flows
+
+#### A. Credentials Auth
+
+Digunakan untuk register dan login manual dengan email/password.
+
+- **Register** dibuat sebagai custom server flow di Next.js
+- User mengisi nama, email, dan password
+- Password di-hash sebelum disimpan ke MongoDB
+- Setelah register berhasil, user dapat login melalui credentials provider
+
+#### B. OAuth Auth
+
+Digunakan untuk login cepat tanpa password, dimulai dengan Google.
+
+- User klik tombol "Continue with Google"
+- Auth.js menangani OAuth handshake
+- Jika user belum ada di database, account baru dibuat otomatis
+- Jika user sudah ada, sistem langsung membuat session login
+
+### 6.3 Why Register Should Be Custom
+
+Auth.js/NextAuth **tidak menyediakan fitur register bawaan** untuk credentials-based signup. Karena itu:
+
+- **Register** dibuat sendiri melalui route handler atau server action
+- **Login/session management** tetap menggunakan Auth.js
+- Pola ini adalah praktik umum dan paling fleksibel untuk aplikasi production
+
+### 6.4 Recommended MongoDB Collections
+
+#### `users`
+
+Menyimpan data utama user.
+
+Contoh field:
+
+- `_id`
+- `name`
+- `email`
+- `passwordHash` (nullable untuk user OAuth-only)
+- `image`
+- `authProviders` (mis. `credentials`, `google`)
+- `emailVerified`
+- `createdAt`
+- `updatedAt`
+
+#### `accounts`
+
+Digunakan bila memakai OAuth dan/atau adapter Auth.js.
+
+Contoh field:
+
+- `userId`
+- `provider`
+- `providerAccountId`
+- `access_token`
+- `refresh_token`
+- `expires_at`
+
+#### `sessions`
+
+Opsional bila memakai database session. Untuk rekomendasi awal ini **tidak wajib** karena kita memakai JWT session.
+
+#### `verificationTokens`
+
+Opsional untuk email verification / reset password flow di masa depan.
+
+### 6.5 Recommended Session Strategy
+
+Untuk fase awal, gunakan **JWT session** karena:
+
+- implementasinya lebih sederhana
+- tidak wajib menyimpan session ke database
+- cocok untuk MVP dan dashboard web internal project
+- lebih cepat untuk memulai fitur auth credentials + OAuth
+
+Database session bisa ditambahkan nanti jika dibutuhkan untuk:
+
+- session revocation yang lebih granular
+- multi-device management
+- audit session aktif
+
+### 6.6 Recommended Route Responsibilities
+
+#### Public Routes
+
+- `/portal`
+
+#### Protected Routes
+
+- `/`
+- `/habits`
+- `/reports`
+- `/alerts`
+- `/settings`
+
+Proteksi route dilakukan dengan middleware dan server-side session check.
+
+### 6.7 Fullstack Auth Responsibilities in Next.js
+
+#### Next.js handles:
+
+- register API / server action
+- login via Auth.js credentials provider
+- OAuth callback handling
+- session creation and validation
+- protected route access
+- logout
+
+#### MongoDB handles:
+
+- user identity storage
+- OAuth-linked account storage
+- future profile and auth-related metadata
+
+### 6.8 Recommended User Lifecycle
+
+#### Register with Credentials
+
+1. User isi form register
+2. Next.js validasi input
+3. Cek email sudah ada atau belum
+4. Password di-hash
+5. User disimpan ke MongoDB
+6. User login menggunakan credentials flow
+7. Session dibuat
+
+#### Login with Credentials
+
+1. User isi email dan password
+2. Auth.js credentials provider memverifikasi user
+3. Password dibandingkan dengan hash di database
+4. Jika valid, session dibuat
+
+#### Login/Register with Google OAuth
+
+1. User klik login dengan Google
+2. Auth.js menjalankan OAuth flow
+3. Sistem cek apakah email sudah ada
+4. Jika belum ada, buat user baru
+5. Link account provider ke user
+6. Session dibuat
+
+### 6.9 Security Recommendations
+
+- Password **harus di-hash**, jangan pernah simpan plain text
+- Validasi input di server, bukan hanya di client
+- Gunakan environment variables untuk secret auth dan OAuth credentials
+- Batasi error message agar tidak membocorkan info email terdaftar/tidak
+- Tambahkan rate limiting untuk register/login endpoint pada fase berikutnya
+- Siapkan email verification bila auth sudah masuk fase production
+
+### 6.10 Recommendation for This Project
+
+Untuk Habit Tracker ini, arsitektur auth yang paling cocok adalah:
+
+- **Next.js fullstack** sebagai web app + auth backend ringan
+- **MongoDB** sebagai database utama auth dan data user
+- **Auth.js** untuk login, session, dan Google OAuth
+- **Custom register flow** untuk signup email/password
+- **JWT session** untuk implementasi awal yang lebih sederhana
+
+Dengan pendekatan ini, project tetap ringan, cepat di-develop, dan mudah dikembangkan ke fitur production seperti email verification, forgot password, role management, dan desktop-device linking.
+
+---
+
+_Generated by Gemini - 2026_
