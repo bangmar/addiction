@@ -246,7 +246,8 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
     setIsSubmittingOAuth(true);
 
     try {
-      await signIn("google", { callbackUrl });
+      const oauthCallbackUrl = `/portal/callback?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      await signIn("google", { callbackUrl: oauthCallbackUrl });
     } finally {
       setIsSubmittingOAuth(false);
     }
