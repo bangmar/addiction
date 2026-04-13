@@ -316,6 +316,23 @@ export default function PortalFeature({
 														error={registerErrors.password}
 													/>
 
+													<PasswordField
+														id='portal-confirm-password-register'
+														label='Confirm password'
+														value={registerValues.confirmPassword}
+														placeholder='Confirm your password'
+														isVisible={showRegisterConfirmPassword}
+														onToggleVisibility={() =>
+															setShowRegisterConfirmPassword(
+																(current) => !current,
+															)
+														}
+														onChange={(value) =>
+															updateRegisterValue("confirmPassword", value)
+														}
+														error={registerErrors.confirmPassword}
+													/>
+
 													<div className='space-y-2'>
 														<label
 															className='text-sm font-medium text-zinc-700'
@@ -334,23 +351,6 @@ export default function PortalFeature({
 														/>
 														<FieldError message={registerErrors.name} />
 													</div>
-
-													<PasswordField
-														id='portal-confirm-password-register'
-														label='Confirm password'
-														value={registerValues.confirmPassword}
-														placeholder='Confirm your password'
-														isVisible={showRegisterConfirmPassword}
-														onToggleVisibility={() =>
-															setShowRegisterConfirmPassword(
-																(current) => !current,
-															)
-														}
-														onChange={(value) =>
-															updateRegisterValue("confirmPassword", value)
-														}
-														error={registerErrors.confirmPassword}
-													/>
 												</>
 											)}
 										</div>

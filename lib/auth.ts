@@ -4,14 +4,23 @@ import type { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 
-import clientPromise from "@/lib/mongodb";
+import clientPromise, { DATABASE_NAME, getDatabase } from "@/lib/mongodb";
 
 type GoogleProfile = {
   picture?: string;
 };
 
+type AuthUserDocument = {
+  _id?: unknown;
+  name?: string | null;
+  email: string;
+  image?: string | null;
+  passwordHash?: string;
+  authProviders?: string[];
+};
+
 export const authOptions: NextAuthOptions = {
-  adapter: MongoDBAdapter(clientPromise),
+  adapter: MongoDBAdapter(clientPromise, { databaseName: DATABASE_NAME }),
   secret: process.env.AUTH_SECRET,
   session: {
     strategy: "jwt",
@@ -31,9 +40,8 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const client = await clientPromise;
-        const db = client.db();
-        const user = await db.collection("users").findOne({
+        const db = await getDatabase();
+        const user = await db.collection<AuthUserDocument>("users").findOne({
           email: credentials.email.toLowerCase(),
         });
 
@@ -51,10 +59,11 @@ export const authOptions: NextAuthOptions = {
         }
 
         return {
-          id: user._id.toString(),
-          name: user.name,
+          id: String(user._id),
+          name: user.name ?? null,
           email: user.email,
           image: typeof user.image === "string" ? user.image : null,
+          authProviders: user.authProviders ?? ["credentials"],
         };
       },
     }),
@@ -75,8 +84,7 @@ export const authOptions: NextAuthOptions = {
         return true;
       }
 
-      const client = await clientPromise;
-      const db = client.db();
+      const db = await getDatabase();
       const providers = account?.provider ? [account.provider] : [];
 
       await db.collection("users").updateOne(
@@ -107,14 +115,26 @@ export const authOptions: NextAuthOptions = {
     },
     async jwt({ token, user }) {
       if (user) {
-        token.userId = user.id;
+        token.id = user.id;
+        token.authProviders = user.authProviders ?? [];
+      }
+
+      if ((!token.authProviders || token.authProviders.length === 0) && token.email) {
+        const db = await getDatabase();
+        const dbUser = await db.collection<AuthUserDocument>("users").findOne(
+          { email: token.email.toLowerCase() },
+          { projection: { authProviders: 1 } },
+        );
+
+        token.authProviders = dbUser?.authProviders ?? [];
       }
 
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = token.id ?? token.sub;
+        session.user.authProviders = token.authProviders ?? [];
       }
 
       return session;

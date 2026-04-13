@@ -120,6 +120,8 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
   const isLogin = mode === "login";
   const benefits = isLogin ? content.loginBenefits : content.registerBenefits;
 
+  const callbackUrl = useMemo(() => searchParams.get("callbackUrl") ?? "/", [searchParams]);
+
   const oauthMessage = useMemo(() => {
     const error = searchParams.get("error");
 
@@ -168,7 +170,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
         email: loginValues.email,
         password: loginValues.password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl,
       });
 
       if (!result || result.error) {
@@ -176,7 +178,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
         return;
       }
 
-      router.push(result.url ?? "/");
+      router.push(result.url ?? callbackUrl);
       router.refresh();
     } finally {
       setIsSubmittingLogin(false);
@@ -207,7 +209,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
         email: registerValues.email,
         password: registerValues.password,
         redirect: false,
-        callbackUrl: "/",
+        callbackUrl,
       });
 
       if (!result || result.error) {
@@ -220,7 +222,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
         return;
       }
 
-      router.push(result.url ?? "/");
+      router.push(result.url ?? callbackUrl);
       router.refresh();
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -244,7 +246,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
     setIsSubmittingOAuth(true);
 
     try {
-      await signIn("google", { callbackUrl: "/" });
+      await signIn("google", { callbackUrl });
     } finally {
       setIsSubmittingOAuth(false);
     }

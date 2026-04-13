@@ -1,4 +1,4 @@
-Saya sedang mengerjakan web habit tracker. Untuk PRD-nya bisa dilihat di:
+Saya sedang mengerjakan web habit tracker di sisi web yang bisa di lihat di dalam D:\PORTFOLIO\tracker\frontend . Untuk PRD-nya bisa dilihat di:
 
 D:\PORTFOLIO\tracker\doc\prd.md
 
