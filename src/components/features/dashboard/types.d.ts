@@ -3,20 +3,6 @@ import type { LucideIcon } from "lucide-react";
 import type { AnalyticsChartPoint } from "./analytics-chart/types";
 import type { SummaryChartSegment } from "./summary-chart/types";
 
-export type DashboardNavItem = {
-  label: string;
-  icon: LucideIcon;
-  href: string;
-  active?: boolean;
-};
-
-export type DashboardTargetItem = {
-  name: string;
-  subtitle: string;
-  icon: LucideIcon;
-  accentClassName: string;
-};
-
 export type DashboardStatCard = {
   label: string;
   value: string;
@@ -57,6 +43,9 @@ export type DashboardProgram = {
 export type DashboardDesktopStatus = {
   title: string;
   subtitle: string;
+  isMonitoring: boolean;
+  watchedRulesCount: number;
+  activeWindowTitle: string | null;
 };
 
 export type DashboardActiveSession = {
@@ -67,8 +56,6 @@ export type DashboardActiveSession = {
 };
 
 export type DashboardData = {
-  primaryNavigation: DashboardNavItem[];
-  targets: DashboardTargetItem[];
   statCards: DashboardStatCard[];
   summaryStats: DashboardSummaryStat[];
   analytics: AnalyticsChartPoint[];
@@ -79,8 +66,6 @@ export type DashboardData = {
   teamOnlineCount: string;
   selectedPeriod: string;
   yearLabel: string;
-  workspaceLabel: string;
-  workspaceName: string;
   searchPlaceholder: string;
   desktopStatus: DashboardDesktopStatus;
   highlightDate: string;

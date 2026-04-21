@@ -1,140 +1,241 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
+import { useMemo, useState } from "react";
+
 import {
-  AlarmClock,
-  BrainCircuit,
-  Globe,
-  LayoutDashboard,
-  ShieldAlert,
-  TabletSmartphone,
-  TriangleAlert,
-} from "lucide-react";
-
-import type { DashboardNavItem, DashboardTargetItem } from "@/src/components/features/dashboard/types";
-
+  getSettingsProfile,
+  updateSettingsPassword,
+  updateSettingsProfile,
+  type SettingsApiError,
+} from "./api";
 import type {
-  LoginLogItem,
+  LoginDeviceFilter,
+  PasswordFormValues,
   SettingsData,
   SettingsInsight,
-  SettingsOverviewStat,
+  SettingsNotice,
 } from "./types";
 
+const languageOptions = [
+  { label: "Bahasa Indonesia", value: "id" },
+  { label: "English", value: "en" },
+] as const;
+
+const passwordRequirements = [
+  { label: "Minimal 8 karakter" },
+  { label: "Gabungan huruf besar dan kecil" },
+  { label: "Minimal satu angka" },
+] as const;
+
+const loginDeviceFilters: LoginDeviceFilter[] = [
+  "All devices",
+  "Web dashboard",
+  "Desktop app",
+  "Mobile app",
+];
+
+const insights: SettingsInsight[] = [
+  {
+    title: "Profile guidance",
+    description:
+      "Perbarui nama profile dan bahasa aplikasi agar pengalaman workspace lebih personal tanpa mengubah foto profile dulu.",
+  },
+  {
+    title: "Security note",
+    description:
+      "Reset password dipisah dari profile utama agar perubahan account settings tetap jelas dan aman.",
+  },
+  {
+    title: "Login review",
+    description:
+      "Login log diambil dari service settings agar halaman ini siap dihubungkan ke riwayat akses yang lebih detail nanti.",
+  },
+];
+
+const defaultPasswordForm: PasswordFormValues = {
+  currentPassword: "",
+  newPassword: "",
+  confirmPassword: "",
+};
+
+function getInitials(name?: string | null, email?: string | null) {
+  const source = name?.trim() || email?.trim() || "TC";
+  const parts = source.split(/\s+/).filter(Boolean).slice(0, 2);
+
+  if (parts.length === 0) {
+    return "TC";
+  }
+
+  return parts.map((part) => part[0]?.toUpperCase() ?? "").join("");
+}
+
+function formatUpdatedAt(value?: string | null) {
+  if (!value) {
+    return "Belum ada perubahan profile.";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Belum ada perubahan profile.";
+  }
+
+  return `Last updated ${new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)}`;
+}
+
+function getErrorMessage(error: unknown, fallback: string) {
+  const axiosError = error as { response?: { data?: SettingsApiError } };
+  return axiosError.response?.data?.message ?? fallback;
+}
+
 export default function useSettings(): SettingsData {
-  const primaryNavigation: DashboardNavItem[] = [
-    { label: "Overview", icon: LayoutDashboard, href: "/" },
-    { label: "Habits", icon: BrainCircuit, href: "/habits" },
-    { label: "Download & Report", icon: AlarmClock, href: "/reports" },
-    { label: "Alerts", icon: TriangleAlert, href: "/alerts" },
-  ];
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const [draftProfileName, setDraftProfileName] = useState("");
+  const [draftSelectedLanguage, setDraftSelectedLanguage] = useState<"id" | "en">("id");
+  const [isProfileDirty, setIsProfileDirty] = useState(false);
+  const [selectedLoginDeviceFilter, setSelectedLoginDeviceFilter] =
+    useState<LoginDeviceFilter>("All devices");
+  const [passwordForm, setPasswordForm] = useState<PasswordFormValues>(defaultPasswordForm);
+  const [profileNotice, setProfileNotice] = useState<SettingsNotice | null>(null);
+  const [passwordNotice, setPasswordNotice] = useState<SettingsNotice | null>(null);
 
-  const targets: DashboardTargetItem[] = [
-    {
-      name: "Social Media",
-      subtitle: "8 domains monitored",
-      icon: Globe,
-      accentClassName: "bg-emerald-500/10 text-emerald-600",
-    },
-    {
-      name: "Gaming",
-      subtitle: "5 executables tracked",
-      icon: TabletSmartphone,
-      accentClassName: "bg-violet-500/10 text-violet-600",
-    },
-    {
-      name: "Impulse Shopping",
-      subtitle: "AI rule active",
-      icon: ShieldAlert,
-      accentClassName: "bg-lime-500/10 text-lime-600",
-    },
-  ];
+  const settingsQuery = useQuery({
+    queryKey: ["settings-profile"],
+    queryFn: getSettingsProfile,
+  });
 
-  const overviewStats: SettingsOverviewStat[] = [
-    { label: "Profile completion", value: "92%", detail: "Foto, nama, dan bahasa sudah terisi" },
-    { label: "Last password reset", value: "14 days ago", detail: "Disarankan refresh password berkala" },
-    { label: "Login devices", value: "03", detail: "Web dashboard dan desktop session aktif" },
-    { label: "Last account update", value: "Today", detail: "Perubahan profil tersimpan 09:40 AM" },
-  ];
+  const saveProfileMutation = useMutation({
+    mutationFn: updateSettingsProfile,
+    onSuccess: async (result) => {
+      setProfileNotice({ type: "success", message: result.message });
+      await queryClient.invalidateQueries({ queryKey: ["settings-profile"] });
+    },
+    onError: (error) => {
+      setProfileNotice({
+        type: "error",
+        message: getErrorMessage(error, "Failed to update profile settings."),
+      });
+    },
+  });
 
-  const loginLogs: LoginLogItem[] = [
-    {
-      title: "Web dashboard login",
-      timestamp: "Today, 09:40 AM",
-      device: "Web dashboard",
-      location: "Chrome on Windows",
-      accentClassName: "bg-lime-500/10 text-lime-700",
+  const resetPasswordMutation = useMutation({
+    mutationFn: updateSettingsPassword,
+    onSuccess: (result) => {
+      setPasswordNotice({ type: "success", message: result.message });
+      setPasswordForm(defaultPasswordForm);
     },
-    {
-      title: "Desktop tracker sync access",
-      timestamp: "Today, 07:12 AM",
-      device: "Desktop app",
-      location: "Windows desktop agent",
-      accentClassName: "bg-sky-500/10 text-sky-700",
+    onError: (error) => {
+      setPasswordNotice({
+        type: "error",
+        message: getErrorMessage(error, "Failed to update password."),
+      });
     },
-    {
-      title: "Mobile review session",
-      timestamp: "Yesterday, 08:15 PM",
-      device: "Mobile app",
-      location: "PWA on Android",
-      accentClassName: "bg-violet-500/10 text-violet-700",
-    },
-    {
-      title: "Web dashboard login",
-      timestamp: "Yesterday, 06:48 AM",
-      device: "Web dashboard",
-      location: "Edge on Windows",
-      accentClassName: "bg-lime-500/10 text-lime-700",
-    },
-  ];
+  });
 
-  const insights: SettingsInsight[] = [
-    {
-      title: "Profile guidance",
-      description: "Lengkapi foto profile dan gunakan nama yang konsisten agar workspace recovery lebih personal.",
-    },
-    {
-      title: "Security note",
-      description: "Reset password terakhir sudah lebih dari 2 minggu. UI bisa menonjolkan CTA reset password sebagai secondary action.",
-    },
-    {
-      title: "Login review",
-      description: "Filter login log membantu user mengecek akses dari web dashboard versus desktop tracker tanpa perlu data teknis berlebih.",
-    },
-  ];
+  const baseProfileName = settingsQuery.data?.profile.name ?? session?.user?.name ?? "";
+  const baseSelectedLanguage =
+    settingsQuery.data?.profile.preferredLanguage === "en" ? "en" : "id";
+  const currentEmail = settingsQuery.data?.profile.email ?? session?.user?.email ?? "";
+  const currentName = isProfileDirty ? draftProfileName : baseProfileName;
+  const selectedLanguage = isProfileDirty ? draftSelectedLanguage : baseSelectedLanguage;
+
+  const profileCompletion = useMemo(() => {
+    let completed = 0;
+    if (currentName.trim()) {
+      completed += 1;
+    }
+    if (currentEmail.trim()) {
+      completed += 1;
+    }
+    if (selectedLanguage) {
+      completed += 1;
+    }
+
+    return completed / 3;
+  }, [currentEmail, currentName, selectedLanguage]);
+
+  const filteredLoginLogs = useMemo(() => {
+    const logs = settingsQuery.data?.loginLogs ?? [];
+    if (selectedLoginDeviceFilter === "All devices") {
+      return logs;
+    }
+
+    return logs.filter((log) => log.device === selectedLoginDeviceFilter);
+  }, [selectedLoginDeviceFilter, settingsQuery.data?.loginLogs]);
+
+  function setProfileName(value: string) {
+    setProfileNotice(null);
+    setIsProfileDirty(true);
+    setDraftProfileName(value);
+  }
+
+  function setSelectedLanguage(value: "id" | "en") {
+    setProfileNotice(null);
+    setIsProfileDirty(true);
+    setDraftSelectedLanguage(value);
+  }
+
+  async function handleSaveProfile() {
+    setProfileNotice(null);
+    await saveProfileMutation.mutateAsync({
+      name: currentName.trim(),
+      preferredLanguage: selectedLanguage,
+    });
+    setIsProfileDirty(false);
+    setDraftProfileName("");
+    setDraftSelectedLanguage(baseSelectedLanguage);
+  }
+
+  function handleResetProfile() {
+    setProfileNotice(null);
+    setIsProfileDirty(false);
+    setDraftProfileName("");
+    setDraftSelectedLanguage(baseSelectedLanguage);
+  }
+
+  function handlePasswordFieldChange(field: keyof PasswordFormValues, value: string) {
+    setPasswordNotice(null);
+    setPasswordForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  async function handleResetPassword() {
+    setPasswordNotice(null);
+    await resetPasswordMutation.mutateAsync(passwordForm);
+  }
 
   return {
-    primaryNavigation,
-    targets,
-    workspaceLabel: "Account",
-    workspaceName: "Digital Recovery Lab",
     searchPlaceholder: "Search profile settings, sessions, login history...",
-    overviewStats,
-    profileFields: [
-      {
-        label: "Full name",
-        value: "Mario Pratama",
-        placeholder: "Masukkan nama lengkap",
-        helper: "Nama ini akan tampil di workspace dan dashboard.",
-      },
-      {
-        label: "Email address",
-        value: "mario@timercheck.app",
-        type: "email",
-        placeholder: "you@example.com",
-        helper: "Dipakai untuk login dashboard dan sinkronisasi akun.",
-      },
-    ],
-    languageOptions: [
-      { label: "Bahasa Indonesia", value: "id" },
-      { label: "English", value: "en" },
-    ],
-    selectedLanguage: "id",
-    passwordRequirements: [
-      { label: "Minimal 8 karakter" },
-      { label: "Gabungan huruf besar dan kecil" },
-      { label: "Minimal satu angka atau simbol" },
-    ],
-    loginDeviceFilters: ["All devices", "Web dashboard", "Desktop app", "Mobile app"],
-    loginLogs,
+    languageOptions: [...languageOptions],
+    selectedLanguage,
+    setSelectedLanguage,
+    passwordRequirements: [...passwordRequirements],
+    loginDeviceFilters,
+    selectedLoginDeviceFilter,
+    setSelectedLoginDeviceFilter,
+    filteredLoginLogs,
     insights,
-    profileCompletion: 0.92,
-    profileUpdatedAt: "Last updated today at 09:40 AM",
+    profileCompletion,
+    profileUpdatedAt: formatUpdatedAt(settingsQuery.data?.profile.updatedAt),
+    profileName: currentName,
+    setProfileName,
+    profileEmail: currentEmail,
+    profileInitials: getInitials(currentName, currentEmail),
+    profileRoleLabel: "Recovery workspace owner",
+    isLoading: settingsQuery.isLoading,
+    isProfileSaving: saveProfileMutation.isPending,
+    isPasswordSaving: resetPasswordMutation.isPending,
+    profileNotice,
+    passwordNotice,
+    passwordForm,
+    handlePasswordFieldChange,
+    handleSaveProfile,
+    handleResetProfile,
+    handleResetPassword,
   };
 }

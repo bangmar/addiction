@@ -1,8 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 
-import type { DashboardNavItem, DashboardTargetItem } from "@/src/components/features/dashboard/types";
-
 export type HabitMode = "Moderate" | "Abstinence";
+
+export type HabitNotice = {
+  type: "success" | "error" | "info";
+  message: string;
+};
 
 export type HabitOverviewStat = {
   label: string;
@@ -11,8 +14,10 @@ export type HabitOverviewStat = {
 };
 
 export type HabitCard = {
+  id: string;
   name: string;
   category: string;
+  categoryId: string;
   prompt: string;
   mode: HabitMode;
   budget: string;
@@ -54,11 +59,19 @@ export type HabitQuickAction = {
   accentClassName: string;
 };
 
+export type AddHabitFormValues = {
+  name: string;
+  category: string;
+  categoryId: string;
+  prompt: string;
+  mode: HabitMode;
+  budget: string | null;
+  schedule: string;
+  domains: string[];
+  executables: string[];
+};
+
 export type HabitsData = {
-  primaryNavigation: DashboardNavItem[];
-  targets: DashboardTargetItem[];
-  workspaceLabel: string;
-  workspaceName: string;
   searchPlaceholder: string;
   overviewStats: HabitOverviewStat[];
   habits: HabitCard[];
@@ -67,4 +80,17 @@ export type HabitsData = {
   activities: HabitActivity[];
   quickActions: HabitQuickAction[];
   syncStatus: string;
+  habitsNotice: HabitNotice | null;
+  deleteCandidate: HabitCard | null;
+  isLoading: boolean;
+  isCreatingHabit: boolean;
+  isDeletingHabit: boolean;
+  deletingHabitId: string | null;
+  isDeleteModalOpen: boolean;
+  canCreateHabit: boolean;
+  handleCreateHabit: (values: AddHabitFormValues) => Promise<void>;
+  handleDeleteHabit: (habitId: string) => Promise<void>;
+  openDeleteHabitModal: (habitId: string) => void;
+  closeDeleteHabitModal: () => void;
+  confirmDeleteHabit: () => Promise<void>;
 };

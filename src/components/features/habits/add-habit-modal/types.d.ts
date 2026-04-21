@@ -24,6 +24,7 @@ export type AddHabitGeneratedTargets = {
 
 export type AddHabitWizardState = {
   step: AddHabitStep;
+  name: string;
   category: string;
   prompt: string;
   mode: "Moderate" | "Abstinence";
@@ -33,11 +34,27 @@ export type AddHabitWizardState = {
   manualExecutables: string;
 };
 
+export type AddHabitSubmitValues = {
+  name: string;
+  category: string;
+  categoryId: string;
+  prompt: string;
+  mode: "Moderate" | "Abstinence";
+  budget: string | null;
+  schedule: string;
+  domains: string[];
+  executables: string[];
+};
+
 export type AddHabitModalProps = {
   triggerLabel?: string;
   title?: string;
   description?: string;
   submitLabel?: string;
   initialValues?: Partial<AddHabitWizardState>;
+  initialGeneratedTargets?: AddHabitGeneratedTargets;
   triggerClassName?: string;
+  isSubmitting?: boolean;
+  submitError?: string | null;
+  onSubmit?: (values: AddHabitSubmitValues) => Promise<void> | void;
 };

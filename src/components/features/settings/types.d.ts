@@ -1,22 +1,6 @@
-import type { DashboardNavItem, DashboardTargetItem } from "@/src/components/features/dashboard/types";
-
-export type SettingsOverviewStat = {
-  label: string;
-  value: string;
-  detail: string;
-};
-
-export type ProfileField = {
-  label: string;
-  value: string;
-  placeholder?: string;
-  type?: "text" | "email" | "password";
-  helper?: string;
-};
-
 export type LanguageOption = {
   label: string;
-  value: string;
+  value: "id" | "en";
 };
 
 export type PasswordRequirement = {
@@ -38,20 +22,43 @@ export type SettingsInsight = {
   description: string;
 };
 
+export type SettingsNotice = {
+  type: "success" | "error";
+  message: string;
+};
+
+export type PasswordFormValues = {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+};
+
 export type SettingsData = {
-  primaryNavigation: DashboardNavItem[];
-  targets: DashboardTargetItem[];
-  workspaceLabel: string;
-  workspaceName: string;
   searchPlaceholder: string;
-  overviewStats: SettingsOverviewStat[];
-  profileFields: ProfileField[];
   languageOptions: LanguageOption[];
-  selectedLanguage: string;
+  selectedLanguage: "id" | "en";
+  setSelectedLanguage: (value: "id" | "en") => void;
   passwordRequirements: PasswordRequirement[];
   loginDeviceFilters: LoginDeviceFilter[];
-  loginLogs: LoginLogItem[];
+  selectedLoginDeviceFilter: LoginDeviceFilter;
+  setSelectedLoginDeviceFilter: (value: LoginDeviceFilter) => void;
+  filteredLoginLogs: LoginLogItem[];
   insights: SettingsInsight[];
   profileCompletion: number;
   profileUpdatedAt: string;
+  profileName: string;
+  setProfileName: (value: string) => void;
+  profileEmail: string;
+  profileInitials: string;
+  profileRoleLabel: string;
+  isLoading: boolean;
+  isProfileSaving: boolean;
+  isPasswordSaving: boolean;
+  profileNotice: SettingsNotice | null;
+  passwordNotice: SettingsNotice | null;
+  passwordForm: PasswordFormValues;
+  handlePasswordFieldChange: (field: keyof PasswordFormValues, value: string) => void;
+  handleSaveProfile: () => Promise<void>;
+  handleResetProfile: () => void;
+  handleResetPassword: () => Promise<void>;
 };

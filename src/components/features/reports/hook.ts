@@ -1,15 +1,4 @@
-import {
-  AlarmClock,
-  BrainCircuit,
-  Download,
-  Globe,
-  LayoutDashboard,
-  ShieldAlert,
-  TabletSmartphone,
-  TriangleAlert,
-} from "lucide-react";
-
-import type { DashboardNavItem, DashboardTargetItem } from "@/src/components/features/dashboard/types";
+import { Download } from "lucide-react";
 
 import type {
   DesktopDownloadCard,
@@ -20,34 +9,6 @@ import type {
 } from "./types";
 
 export default function useReports(): ReportsData {
-  const primaryNavigation: DashboardNavItem[] = [
-    { label: "Overview", icon: LayoutDashboard, href: "/" },
-    { label: "Habits", icon: BrainCircuit, href: "/habits" },
-    { label: "Download & Report", icon: AlarmClock, href: "/reports", active: true },
-    { label: "Alerts", icon: TriangleAlert, href: "/alerts" },
-  ];
-
-  const targets: DashboardTargetItem[] = [
-    {
-      name: "Social Media",
-      subtitle: "8 domains monitored",
-      icon: Globe,
-      accentClassName: "bg-emerald-500/10 text-emerald-600",
-    },
-    {
-      name: "Gaming",
-      subtitle: "5 executables tracked",
-      icon: TabletSmartphone,
-      accentClassName: "bg-violet-500/10 text-violet-600",
-    },
-    {
-      name: "Impulse Shopping",
-      subtitle: "AI rule active",
-      icon: ShieldAlert,
-      accentClassName: "bg-lime-500/10 text-lime-600",
-    },
-  ];
-
   const overviewStats: ReportOverviewStat[] = [
     { label: "Desktop builds", value: "01", detail: "Windows installer ready for download" },
     { label: "Exportable habits", value: "06", detail: "Per-habit report ready" },
@@ -115,10 +76,6 @@ export default function useReports(): ReportsData {
   ];
 
   return {
-    primaryNavigation,
-    targets,
-    workspaceLabel: "Account",
-    workspaceName: "Digital Recovery Lab",
     searchPlaceholder: "Search builds, exports, report history...",
     overviewStats,
     desktopDownloads,

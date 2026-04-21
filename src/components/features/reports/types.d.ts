@@ -1,7 +1,5 @@
 import type { LucideIcon } from "lucide-react";
 
-import type { DashboardNavItem, DashboardTargetItem } from "@/src/components/features/dashboard/types";
-
 export type ReportOverviewStat = {
   label: string;
   value: string;
@@ -34,10 +32,6 @@ export type ReportInsight = {
 };
 
 export type ReportsData = {
-  primaryNavigation: DashboardNavItem[];
-  targets: DashboardTargetItem[];
-  workspaceLabel: string;
-  workspaceName: string;
   searchPlaceholder: string;
   overviewStats: ReportOverviewStat[];
   desktopDownloads: DesktopDownloadCard[];

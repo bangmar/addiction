@@ -1,6 +1,6 @@
 import axios from "axios";
 import type { AxiosError } from "axios";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 
@@ -247,6 +247,7 @@ export default function usePortal({ oauthEnabled }: PortalFeatureProps): PortalH
 
     try {
       const oauthCallbackUrl = `/portal/callback?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+      await signOut({ redirect: false });
       await signIn("google", { callbackUrl: oauthCallbackUrl });
     } finally {
       setIsSubmittingOAuth(false);

@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
 
 import AnalyticsChart from "./analytics-chart";
 import useDashboard from "./hook";
-import DashboardSidebar from "./sidebar";
+import DashboardSidebar from "@/src/components/ui/sidebar";
 import SummaryChart from "./summary-chart";
 
 const fadeInUp = {
@@ -34,7 +34,6 @@ export default function DashboardFeature() {
 		desktopStatus,
 		highlightDate,
 		highlightValue,
-		primaryNavigation,
 		programs,
 		programsLabel,
 		recentActivities,
@@ -44,10 +43,7 @@ export default function DashboardFeature() {
 		statCards,
 		summarySegments,
 		summaryStats,
-		targets,
 		teamOnlineCount,
-		workspaceLabel,
-		workspaceName,
 	} = useDashboard();
 
 	return (
@@ -56,13 +52,8 @@ export default function DashboardFeature() {
 				initial={{ opacity: 0, scale: 0.98 }}
 				animate={{ opacity: 1, scale: 1 }}
 				transition={{ duration: 0.4, ease: "easeOut" }}
-				className='mx-auto grid w-full max-w-370 overflow-hidden rounded-[24px] border border-white/70 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.08)] xl:grid-cols-[280px_minmax(0,1fr)]'>
-				<DashboardSidebar
-					primaryNavigation={primaryNavigation}
-					targets={targets}
-					workspaceLabel={workspaceLabel}
-					workspaceName={workspaceName}
-				/>
+				className='mx-auto grid w-full max-w-[160rem] overflow-hidden rounded-[24px] border border-white/70 bg-white shadow-[0_30px_80px_rgba(15,23,42,0.08)] xl:grid-cols-[280px_minmax(0,1fr)]'>
+				<DashboardSidebar />
 
 				<section className='min-w-0 bg-white'>
 					<div className='flex flex-col gap-4 border-b border-zinc-200/80 px-4 py-4 sm:px-6 lg:px-6 xl:px-8'>
@@ -99,8 +90,8 @@ export default function DashboardFeature() {
 											</p>
 										</div>
 									</div>
-									<div className='mt-8 flex flex-wrap items-end justify-between gap-4 sm:mt-10'>
-										<div className='text-[2.3rem] font-medium leading-none tracking-tight text-zinc-950 sm:text-[3.2rem]'>
+									<div className='mt-8 flex flex-wrap items-center justify-between gap-4 sm:mt-10'>
+										<div className='text-[2.3rem] font-medium leading-none tracking-tight text-zinc-950 sm:text-[2rem]'>
 											{activeSession.duration}
 										</div>
 										<motion.button
@@ -392,6 +383,11 @@ export default function DashboardFeature() {
 													</p>
 													<p className='mt-1 text-sm text-zinc-500'>
 														{desktopStatus.subtitle}
+													</p>
+													<p className='mt-2 text-xs text-zinc-400'>
+														{desktopStatus.isMonitoring
+															? `Monitoring ${desktopStatus.watchedRulesCount} rules${desktopStatus.activeWindowTitle ? ` · ${desktopStatus.activeWindowTitle}` : ""}`
+															: "Desktop agent belum aktif monitoring."}
 													</p>
 												</div>
 												<motion.button
